@@ -1,62 +1,79 @@
 package com.mmc.timer.app.UI;
 
-import com.vaadin.event.ShortcutAction;
-import com.vaadin.server.Page;
+import com.mmc.timer.app.timer.Timer;
+import com.mmc.timer.app.timer.TimerListener;
+import com.mmc.timer.app.timer.TimerService;
+import com.vaadin.annotations.Push;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 
 @SpringUI
-public class TimerUI extends UI{
+@Push
+public class TimerUI extends UI implements TimerListener{
 
-    private VerticalLayout rootLayout;
-    private TextField textField;
-    private Button btnStart;
-    private HorizontalLayout mainControllPanel;
+    @Autowired
+    TimerService timerService;
 
+    VerticalLayout rootLayout;
+    AddPanel addPanel = new AddPanel();
+    TimerComponent timerComponent = new TimerComponent();
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         setupMainLayout();
         addHeader();
-        addForm();
+        addAddPanel();
+        addTimerComponent();
 
-    }
-
-    private void addHeader() {
-        Label label = new Label("Timer");
-
-        rootLayout.addComponent(label);
-    }
-
-    private void addForm() {
-
-        btnStart = new Button("Start");
-
-        textField = new TextField();
-
-        textField.setPlaceholder("How many minutes should I count down?");
-
-        btnStart.setClickShortcut(ShortcutAction.KeyCode.ENTER);
-        btnStart.addClickListener((event)->{
-            new Notification("Started!").show(Page.getCurrent());
-            hideStartButton();
-        });
-
-        mainControllPanel = new HorizontalLayout();
-
-        mainControllPanel.addComponent(textField);
-        mainControllPanel.addComponent(btnStart);
-
-        rootLayout.addComponent(mainControllPanel);
-    }
-
-    private void hideStartButton() {
-        mainControllPanel.removeComponent(btnStart);
     }
 
     private void setupMainLayout() {
         rootLayout = new VerticalLayout();
         setContent(rootLayout);
+    }
+
+    private void addHeader() {
+        Label label = new Label("Timer");
+        rootLayout.addComponent(label);
+    }
+
+    private void addTimerComponent() {
+        rootLayout.addComponent(timerComponent);
+    }
+
+    private void addAddPanel() {
+        addPanel.setBtnListener((Button.ClickListener) clickEvent -> {
+            timerService.coundDown(()->10, TimerUI.this);
+        });
+
+        rootLayout.addComponent(addPanel);
+    }
+
+    @Override
+    public void nowTimeIs(String timeLeft) {
+        updateTimer(timeLeft);
+    }
+
+    private void updateTimer(String timeLeft) {
+        access(new Runnable() {
+            @Override
+            public void run() {
+                timerComponent.update(timeLeft);
+            }
+        });
+    }
+
+    @Override
+    public void reachEnd() {
+
+    }
+
+    @Override
+    public void reachedTimeStamp() {
+
     }
 }
